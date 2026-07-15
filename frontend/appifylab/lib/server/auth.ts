@@ -35,7 +35,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax",
   path: "/api",
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.COOKIE_SECURE === "true",
 } as const;
 
 export function tokenExpiresAt(token: string): number {
