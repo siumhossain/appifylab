@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
+from auth.security import decode_token
 from common.database import check_database_connection, dispose_engine
 from common.migrate import run_migrations
+from common.rate_limiter import get_client_ip, rate_limiter
 from common.redis_client import check_redis_connection
 from common.r2 import router as upload_router
 from common.response import CustomException, CustomResponse
@@ -28,6 +30,28 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+def _rate_limit_identity(request: Request) -> str:
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        try:
+            return f"user:{decode_token(auth[7:], 'access')}"
+        except CustomException:
+            pass
+    return f"ip:{get_client_ip(request)}"
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    allowed, retry_after = rate_limiter.check(
+        _rate_limit_identity(request), request.method
+    )
+    if not allowed:
+        response = CustomResponse.error(message="Too many requests", status_code=429)
+
+        return response
+    return await call_next(request)
 app.include_router(users_router)
 app.include_router(posts_router)
 app.include_router(upload_router)
