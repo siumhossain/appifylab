@@ -21,7 +21,7 @@ class UserService:
 
     def register(self, payload: UserCreate) -> dict:
         if self.crud.exists("users", {"email": payload.email}):
-            raise CustomException("", status_code=409)
+            raise CustomException("Email already exists", status_code=409)
 
         user = self.crud.create(
             "users",

@@ -28,7 +28,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<Envelope<T>
 
   const body = (await res.json().catch(() => null)) as Envelope<T> | null;
   if (!res.ok) {
-    throw new ApiError(body?.message ?? "Something went wrong. Please try again.", res.status);
+    throw new ApiError(body?.message || "Something went wrong. Please try again.", res.status);
   }
   if (!body) {
     throw new ApiError("Unexpected server response.", res.status);

@@ -101,7 +101,7 @@ export async function authenticate(backendPath: string, rawBody: string): Promis
 
   if (!backendRes.ok || !body?.results) {
     return NextResponse.json(
-      { results: null, message: body?.message ?? "Request failed" },
+      { results: null, message: body?.message || "Request failed" },
       { status: backendRes.status || 500 }
     );
   }
